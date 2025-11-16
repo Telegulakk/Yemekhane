@@ -27,9 +27,9 @@ def update_todays_menu():
                 db.session.add(new_menu)
 
             db.session.commit()
-            print(f"✅ Menü güncellendi: {menu_data['tarih']}")
+            print(f"Menü güncellendi: {menu_data['tarih']}")
         else:
-            print("❌ Menü çekilemedi")
+            print("Menü çekilemedi")
 
 
 if __name__ == '__main__':
