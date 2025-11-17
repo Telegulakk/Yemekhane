@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from app.extensions import db
 from app.models.user import User
-from app.middleware.auth_middleware import token_required, get_current_user
+from app.middleware.auth_middleware import token_required, current_user_or_test
 from app.utils.validators import validate_student_email, validate_password
 
 auth_bp = Blueprint('auth', __name__)
@@ -75,10 +75,10 @@ def login():
 
 
 @auth_bp.route('/me', methods=['GET'])
-@token_required
 def get_me():
     """Giriş yapmış kullanıcının kendi bilgilerini getirir"""
-    current_user = get_current_user()
+    user_id = current_user_or_test()  # ID döner (test user veya gerçek JWT)
+    current_user = User.query.get(user_id)  # User objesine çevir
 
     if not current_user:
         return jsonify({'error': 'Kullanıcı bulunamadı'}), 404

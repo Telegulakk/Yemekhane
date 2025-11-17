@@ -4,14 +4,15 @@ from app.extensions import db
 from app.models.menu import Menu
 from app.models.comment import Comment
 from app.models.comment_like import CommentLike
-from app.middleware.auth_middleware import token_required, student_required, get_current_user
+from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
+
 
 comments_bp = Blueprint('comments', __name__)
 comment_actions_bp = Blueprint('comment_actions', __name__)
 
 
 @comments_bp.route('/<menu_id>/comments', methods=['GET'])
-@token_required
+#@token_required
 def get_menu_comments(menu_id):
     """Bir menünün yorumlarını listeler"""
     # Menü var mı?
@@ -57,10 +58,10 @@ def get_menu_comments(menu_id):
 
 
 @comments_bp.route('/<menu_id>/comment', methods=['POST'])
-@student_required
+#@student_required
 def create_comment(menu_id):
     """Bir menüye yorum yapar"""
-    current_user = get_current_user()
+    current_user_id = current_user_or_test()
     data = request.get_json()
 
     if 'yorumMetni' not in data or not data['yorumMetni'].strip():
@@ -74,7 +75,7 @@ def create_comment(menu_id):
     # Yorum oluştur
     new_comment = Comment(
         menu_id=menu_id,
-        kullanici_id=current_user.id,
+        kullanici_id=current_user_id,
         yorum_metni=data['yorumMetni'].strip()
     )
 
@@ -88,7 +89,7 @@ def create_comment(menu_id):
 
 
 @comment_actions_bp.route('/<comment_id>', methods=['PUT'])
-@student_required
+#@student_required
 def update_comment(comment_id):
     """Kendi yorumunu günceller"""
     current_user = get_current_user()
@@ -117,7 +118,7 @@ def update_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>', methods=['DELETE'])
-@student_required
+#@student_required
 def delete_comment(comment_id):
     """Kendi yorumunu siler"""
     current_user = get_current_user()
@@ -139,7 +140,7 @@ def delete_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/like', methods=['POST'])
-@student_required
+#@student_required
 def like_comment(comment_id):
     """Yorumu beğenir"""
     current_user = get_current_user()
@@ -179,7 +180,7 @@ def like_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/like', methods=['DELETE'])
-@student_required
+#@student_required
 def unlike_comment(comment_id):
     """Beğeniyi geri çeker"""
     current_user = get_current_user()
@@ -200,7 +201,7 @@ def unlike_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/dislike', methods=['POST'])
-@student_required
+#@student_required
 def dislike_comment(comment_id):
     """Yorumu beğenmez"""
     current_user = get_current_user()
@@ -240,7 +241,7 @@ def dislike_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/dislike', methods=['DELETE'])
-@student_required
+#@student_required
 def remove_dislike(comment_id):
     """Beğenmeme tepkisini geri çeker"""
     current_user = get_current_user()

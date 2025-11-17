@@ -5,8 +5,10 @@ from app.extensions import db
 from app.models.menu import Menu
 from app.models.rating import Rating
 from app.models.comment import Comment
-from app.middleware.auth_middleware import token_required, student_required, get_current_user
+from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
 from app.utils.validators import validate_rating
+
+
 
 menus_bp = Blueprint('menus', __name__)
 
@@ -25,18 +27,14 @@ def get_today_menu():
 
 
 @menus_bp.route('/stats', methods=['GET'])
+
+
 # @token_required  # Şimdilik kapalı
 def get_menu_stats():
-    """
-    İstatistikleri getirir
-    Parametreler:
-    - sortBy: highest_rated, lowest_rated, most_rated, most_commented, newest (default)
-    - limit: Sayfa başına kayıt (default: 5)
-    - page: Sayfa numarası (default: 1)
-    """
+    """ İstatistikleri getirir """
     sort_by = request.args.get('sortBy', 'newest')
-    limit = request.args.get('limit', 5, type=int)
-    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 5, type=int) # Sayfa başına kayıt : 5
+    page = request.args.get('page', 1, type=int) # sayda numarası : 1
 
     # Base query - tüm menüler
     query = Menu.query
@@ -130,7 +128,7 @@ def rate_menu(menu_id):
 
     # ŞİMDİLİK: Sabit kullanıcı ID (test için)
     # SONRA: current_user.id kullanılacak
-    test_user_id = "test-user-123"
+    test_user_id = current_user_or_test()
 
     # Önceki puan var mı?
     existing_rating = Rating.query.filter_by(
