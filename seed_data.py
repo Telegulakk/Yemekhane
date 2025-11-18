@@ -15,7 +15,7 @@ def seed_database():
     app = create_app()
 
     with app.app_context():
-        print("🌱 Test verileri ekleniyor...")
+        print("Test verileri ekleniyor...")
 
         # Mevcut verileri temizle (opsiyonel)
         # Comment.query.delete()
@@ -35,7 +35,7 @@ def seed_database():
             db.session.add(user)
 
         db.session.commit()
-        print(f"✅ {len(users)} kullanıcı eklendi")
+        print(f" {len(users)} kullanıcı eklendi")
 
         # Son 7 günün menüleri
         menu_data = [
@@ -56,7 +56,7 @@ def seed_database():
             db.session.add(menu)
 
         db.session.commit()
-        print(f"✅ {len(menus)} menü eklendi")
+        print(f" {len(menus)} menü eklendi")
 
         # Puanlar
         import random
@@ -83,7 +83,7 @@ def seed_database():
                     ratings_count += 1
 
         db.session.commit()
-        print(f"✅ {ratings_count} puan eklendi")
+        print(f"{ratings_count} puan eklendi")
 
         # Yorumlar
         sample_comments = [
@@ -113,10 +113,10 @@ def seed_database():
                 comments_count += 1
 
         db.session.commit()
-        print(f"✅ {comments_count} yorum eklendi")
+        print(f"{comments_count} yorum eklendi")
 
-        print("\n🎉 Test verileri başarıyla eklendi!")
-        print("\n📝 Test kullanıcı bilgileri:")
+        print("\n Test verileri başarıyla eklendi!")
+        print("\n Test kullanıcı bilgileri:")
         print("Email: ahmet.yilmaz@ogrenci.edu.tr")
         print("Şifre: Sifre123")
 

@@ -92,7 +92,7 @@ def create_comment(menu_id):
 #@student_required
 def update_comment(comment_id):
     """Kendi yorumunu günceller"""
-    current_user = get_current_user()
+    current_user = current_user_or_test()
     data = request.get_json()
 
     if 'yorumMetni' not in data or not data['yorumMetni'].strip():
@@ -104,7 +104,7 @@ def update_comment(comment_id):
         return jsonify({'error': 'Yorum bulunamadı'}), 404
 
     # Yorumun sahibi mi?
-    if comment.kullanici_id != current_user.id:
+    if comment.kullanici_id != current_user:
         return jsonify({'error': 'Bu yorumu güncelleme yetkiniz yok'}), 403
 
     # Güncelle
@@ -121,7 +121,7 @@ def update_comment(comment_id):
 #@student_required
 def delete_comment(comment_id):
     """Kendi yorumunu siler"""
-    current_user = get_current_user()
+    current_user = current_user_or_test()
 
     # Yorum var mı?
     comment = Comment.query.get(comment_id)
@@ -129,7 +129,7 @@ def delete_comment(comment_id):
         return jsonify({'error': 'Yorum bulunamadı'}), 404
 
     # Yorumun sahibi mi?
-    if comment.kullanici_id != current_user.id:
+    if comment.kullanici_id != current_user:
         return jsonify({'error': 'Bu yorumu silme yetkiniz yok'}), 403
 
     # Sil
@@ -143,7 +143,7 @@ def delete_comment(comment_id):
 #@student_required
 def like_comment(comment_id):
     """Yorumu beğenir"""
-    current_user = get_current_user()
+    current_user = current_user_or_test()
 
     # Yorum var mı?
     comment = Comment.query.get(comment_id)
@@ -152,7 +152,7 @@ def like_comment(comment_id):
 
     # Önceki tepki var mı?
     existing_like = CommentLike.query.filter_by(
-        kullanici_id=current_user.id,
+        kullanici_id=current_user,
         yorum_id=comment_id
     ).first()
 
@@ -165,7 +165,7 @@ def like_comment(comment_id):
     else:
         # Yeni like oluştur
         new_like = CommentLike(
-            kullanici_id=current_user.id,
+            kullanici_id=current_user,
             yorum_id=comment_id,
             begeni_tipi='like'
         )
@@ -183,10 +183,10 @@ def like_comment(comment_id):
 #@student_required
 def unlike_comment(comment_id):
     """Beğeniyi geri çeker"""
-    current_user = get_current_user()
+    current_user = current_user_or_test()
 
     like = CommentLike.query.filter_by(
-        kullanici_id=current_user.id,
+        kullanici_id=current_user,
         yorum_id=comment_id,
         begeni_tipi='like'
     ).first()
@@ -204,7 +204,7 @@ def unlike_comment(comment_id):
 #@student_required
 def dislike_comment(comment_id):
     """Yorumu beğenmez"""
-    current_user = get_current_user()
+    current_user = current_user_or_test()
 
     # Yorum var mı?
     comment = Comment.query.get(comment_id)
@@ -213,7 +213,7 @@ def dislike_comment(comment_id):
 
     # Önceki tepki var mı?
     existing_like = CommentLike.query.filter_by(
-        kullanici_id=current_user.id,
+        kullanici_id=current_user,
         yorum_id=comment_id
     ).first()
 
@@ -226,7 +226,7 @@ def dislike_comment(comment_id):
     else:
         # Yeni dislike oluştur
         new_dislike = CommentLike(
-            kullanici_id=current_user.id,
+            kullanici_id=current_user,
             yorum_id=comment_id,
             begeni_tipi='dislike'
         )
@@ -244,10 +244,10 @@ def dislike_comment(comment_id):
 #@student_required
 def remove_dislike(comment_id):
     """Beğenmeme tepkisini geri çeker"""
-    current_user = get_current_user()
+    current_user = current_user_or_test()
 
     dislike = CommentLike.query.filter_by(
-        kullanici_id=current_user.id,
+        kullanici_id=current_user,
         yorum_id=comment_id,
         begeni_tipi='dislike'
     ).first()

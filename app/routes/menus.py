@@ -107,13 +107,10 @@ def get_menu_details(menu_id):
 
 
 @menus_bp.route('/<menu_id>/rate', methods=['POST'])
-# @student_required  # Şimdilik kapalı
 def rate_menu(menu_id):
     """Bir menüye puan verir veya günceller"""
-    # current_user = get_current_user()  # Şimdilik None döner
     data = request.get_json()
 
-    # Puan kontrolü
     if 'puan' not in data:
         return jsonify({'error': 'Puan gerekli'}), 400
 
@@ -121,29 +118,23 @@ def rate_menu(menu_id):
     if not is_valid:
         return jsonify({'error': message}), 400
 
-    # Menü var mı?
     menu = Menu.query.get(menu_id)
     if not menu:
         return jsonify({'error': 'Menü bulunamadı'}), 404
 
-    # ŞİMDİLİK: Sabit kullanıcı ID (test için)
-    # SONRA: current_user.id kullanılacak
-    test_user_id = current_user_or_test()
+    current_user_id = current_user_or_test()
 
-    # Önceki puan var mı?
     existing_rating = Rating.query.filter_by(
-        kullanici_id=test_user_id,
+        kullanici_id=current_user_id,
         menu_id=menu_id
     ).first()
 
     if existing_rating:
-        # Puanı güncelle
         existing_rating.puan = data['puan']
         message_text = 'Puan güncellendi'
     else:
-        # Yeni puan oluştur
         new_rating = Rating(
-            kullanici_id=test_user_id,
+            kullanici_id=current_user_id,
             menu_id=menu_id,
             puan=data['puan']
         )
