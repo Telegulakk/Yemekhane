@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from datetime import date, datetime, timedelta
+from datetime import date
 from sqlalchemy import desc, func
 from app.extensions import db
 from app.models.menu import Menu
@@ -27,8 +27,6 @@ def get_today_menu():
 
 
 @menus_bp.route('/stats', methods=['GET'])
-
-
 # @token_required  # Şimdilik kapalı
 def get_menu_stats():
     """ İstatistikleri getirir """
