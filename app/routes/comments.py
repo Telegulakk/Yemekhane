@@ -4,7 +4,7 @@ from app.extensions import db
 from app.models.menu import Menu
 from app.models.comment import Comment
 from app.models.comment_like import CommentLike
-from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
+from app.middleware.auth_middleware import token_required, current_user_or_test
 
 
 comments_bp = Blueprint('comments', __name__)
