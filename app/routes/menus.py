@@ -8,8 +8,6 @@ from app.models.comment import Comment
 from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
 from app.utils.validators import validate_rating
 
-
-
 menus_bp = Blueprint('menus', __name__)
 
 
@@ -31,8 +29,8 @@ def get_today_menu():
 def get_menu_stats():
     """ İstatistikleri getirir """
     sort_by = request.args.get('sortBy', 'newest')
-    limit = request.args.get('limit', 5, type=int) # Sayfa başına kayıt : 5
-    page = request.args.get('page', 1, type=int) # sayda numarası : 1
+    limit = request.args.get('limit', 5, type=int)  # Sayfa başına kayıt : 5
+    page = request.args.get('page', 1, type=int)  # sayda numarası : 1
 
     # Base query - tüm menüler
     query = Menu.query
@@ -106,6 +104,7 @@ def get_menu_details(menu_id):
 
 @menus_bp.route('/<menu_id>/rate', methods=['POST'])
 def rate_menu(menu_id):
+    # @student_required
     """Bir menüye puan verir veya günceller"""
     data = request.get_json()
 

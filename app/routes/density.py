@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
 
-
 density_bp = Blueprint('density', __name__, url_prefix='/density')
 
 
@@ -39,7 +38,6 @@ def rate_density():
     rating = data.get('puan')
     if not rating or not isinstance(rating, int) or not (1 <= rating <= 5):
         return jsonify({"error": "Puan 1 ile 5 arasında olmalıdır."}), 400
-
 
     # Kullanıcı son 30 dk içinde zaten oy verdiyse yeni satır eklemek yerine eskisini güncelliyoruz
     thirty_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=30)
