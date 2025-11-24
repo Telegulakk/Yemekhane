@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from app.extensions import db
 from app.models.user import User
-from app.middleware.auth_middleware import token_required, current_user_or_test
+from app.middleware.auth_middleware import current_user_or_test
 from app.utils.validators import validate_student_email, validate_password
 
 auth_bp = Blueprint('auth', __name__)
