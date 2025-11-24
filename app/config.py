@@ -1,28 +1,28 @@
-import os
+import os # .env dosyasından çevre değişkenlerini okur
 from datetime import timedelta
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv() # .env dosyasını yükle
 
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key') # SECRET_KEY yoksa varsayılan dev-secret-key (test) okunur
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') # database'e bağlanır
+    SQLALCHEMY_TRACK_MODIFICATIONS = False # manuel veri kaydetme (false = commit ile)
 
     # JWT ayarları
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-dev-secret')
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)  # JWT token'ın geçerlilik süresi (Kullanıcı tekrar login olmalı)
 
     # CORS ayarları (frontend için)
-    CORS_ORIGINS = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS = ["*"] # flutter
 
 
-class DevelopmentConfig(Config):
+class DevelopmentConfig(Config): # Test ortamı
     DEBUG = True
 
 
-class ProductionConfig(Config):
+class ProductionConfig(Config): # Canlı ortam
     DEBUG = False
 
 
