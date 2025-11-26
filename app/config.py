@@ -17,6 +17,13 @@ class Config:
     # CORS ayarları (frontend için)
     CORS_ORIGINS = ["*"] # flutter
 
+    # Mail Ayarları
+    MAIL_SERVER = 'smtp.googlemail.com'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+
 
 class DevelopmentConfig(Config): # Test ortamı
     DEBUG = True
