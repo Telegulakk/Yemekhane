@@ -34,14 +34,3 @@ def validate_password(password):
         return False, 'Şifre en az bir rakam içermelidir'
 
     return True, 'Şifre geçerli'
-
-
-def validate_rating(puan):
-    """Puan kontrolü (1-5 arası tam sayı olmalı)"""
-    if not isinstance(puan, int):
-        return False, 'Puan bir tam sayı olmalıdır'
-
-    if puan < 1 or puan > 5:
-        return False, 'Puan 1 ile 5 arasında olmalıdır'
-
-    return True, 'Puan geçerli'
