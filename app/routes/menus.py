@@ -52,12 +52,6 @@ def get_menu_stats():
             func.avg(Rating.puan)
         )
 
-    elif sort_by == 'most_rated':
-        # En çok puanlanan menüler
-        query = query.outerjoin(Rating).group_by(Menu.id).order_by(
-            desc(func.count(Rating.id))
-        )
-
     elif sort_by == 'most_commented':
         # En çok yorumlanan menüler
         query = query.outerjoin(Comment).group_by(Menu.id).order_by(
