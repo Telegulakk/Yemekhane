@@ -18,7 +18,7 @@ def validate_student_email(email):
     except EmailNotValidError as e:
         return False, str(e)
 
-
+#wadfsdbpofkdbopkdfobpdf
 def validate_password(password):
     """Şifre güvenlik kontrolü (en az 8 karakter, büyük/küçük harf, rakam)"""
     if len(password) < 8:
