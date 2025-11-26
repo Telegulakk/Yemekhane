@@ -1,4 +1,4 @@
-from functools import wraps
+from functools import wraps 
 import os
 from flask_jwt_extended import current_user
 
