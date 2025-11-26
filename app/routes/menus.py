@@ -6,7 +6,6 @@ from app.models.menu import Menu
 from app.models.rating import Rating
 from app.models.comment import Comment
 from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
-from app.utils.validators import validate_rating
 
 menus_bp = Blueprint('menus', __name__)
 
@@ -105,9 +104,9 @@ def rate_menu(menu_id):
     if 'puan' not in data:
         return jsonify({'error': 'Puan gerekli'}), 400
 
-    is_valid, message = validate_rating(data['puan'])
-    if not is_valid:
-        return jsonify({'error': message}), 400
+    puan = data['puan']
+    if not isinstance(puan, int) or puan < 1 or puan > 5:
+        return jsonify({'error': 'Puan 1 ile 5 arasında bir tam sayı olmalıdır'}), 400
 
     menu = Menu.query.get(menu_id)
     if not menu:
