@@ -7,10 +7,11 @@ from email_validator import validate_email, EmailNotValidError
 def validate_student_email(email):
     """Öğrenci emailini kontrol eder (.edu.tr uzantısı zorunlu)"""
     try:
+        # Önce genel email formatı kontrolü
         valid = validate_email(email)
         email = valid.email
 
-        # .edu.tr uzantısı kontrolü
+        # Sonra .edu.tr uzantısı kontrolü
         if not email.endswith('.edu.tr'):
             return False, 'Email adresi .edu.tr uzantılı olmalıdır'
 
@@ -18,7 +19,6 @@ def validate_student_email(email):
     except EmailNotValidError as e:
         return False, str(e)
 
-#wadfsdbpofkdbopkdfobpdf
 def validate_password(password):
     """Şifre güvenlik kontrolü (en az 8 karakter, büyük/küçük harf, rakam)"""
     if len(password) < 8:
