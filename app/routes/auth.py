@@ -136,3 +136,21 @@ def login():
 
     else:
         return jsonify({'error': 'Email veya şifre hatalı'}), 401
+
+
+from app.middleware.auth_middleware import token_required, student_required
+from flask_jwt_extended import get_jwt_identity
+from app.models.user import User
+
+
+@auth_bp.route('/profile', methods=['GET'])
+@student_required  # <--- BAK BURAYA KİLİDİ KOYDUK!
+def profile():
+    """Sadece giriş yapmış öğrencilerin görebileceği özel alan"""
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+
+    return jsonify({
+        'message': f'Hoşgeldin {user.ad}, burası senin özel profilin!',
+        'veri': 'Bu veriyi sadece token sahibi görebilir.'
+    }), 200
