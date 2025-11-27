@@ -41,7 +41,6 @@ def register():
     generated_code = str(random.randint(100000, 999999))
 
     try:
-        # Senin __init__ fonksiyonuna uygun şekilde çağırıyoruz.
         # DİKKAT: Şifreyi hashlemeden (ham haliyle) veriyoruz, modelin içinde o hashleniyor.
         new_user = User(
             ad=data['ad'],
@@ -118,20 +117,20 @@ def login():
     user = User.query.filter_by(email=data['email']).first()
 
     # --- ŞİFRE KONTROLÜ ---
-    # Senin modelindeki check_password fonksiyonunu kullanıyoruz.
+
     if user and user.check_password(data['sifre']):
 
         # Doğrulama kontrolü
         if not user.is_verified:
             return jsonify({'error': 'Lütfen önce hesabınızı doğrulayın.'}), 403
 
-        # Token oluştur (id string olduğu için sorun yok)
+        # Token oluştur
         access_token = create_access_token(identity=user.id)
 
         return jsonify({
             'message': 'Giriş başarılı',
             'token': access_token,
-            'user': user.to_dict()  # Senin modelindeki to_dict metodunu kullandık
+            'user': user.to_dict()
         }), 200
 
     else:
