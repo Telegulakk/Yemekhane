@@ -153,3 +153,101 @@ def profile():
         'message': f'Hoşgeldin {user.ad}, burası senin özel profilin!',
         'veri': 'Bu veriyi sadece token sahibi görebilir.'
     }), 200
+
+
+# -------------------------------------------------------------------
+# 4. ŞİFREMİ UNUTTUM (KOD GÖNDERME)
+# -------------------------------------------------------------------
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """
+    Kullanıcı mail adresini girer.
+    Sistem kullanıcının varlığını kontrol eder.
+    Var ise veritabanına bir doğrulama kodu yazar ve mail atar.
+    """
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'error': 'Lütfen mail adresinizi girin'}), 400
+
+    # 1. Kullanıcıyı bul
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        # Güvenlik önlemi: Kullanıcı yoksa bile "Yok" demeyiz,
+        # kötü niyetli kişiler rastgele mail deneyip kimin üye olduğunu anlamasın diye
+        # sanki göndermiş gibi yaparız veya genel bir hata döneriz.
+        return jsonify({'error': 'Bu mail adresiyle kayıtlı kullanıcı bulunamadı'}), 404
+
+    # 2. Yeni bir kod oluştur (Örn: 381920)
+    reset_code = str(random.randint(100000, 999999))
+
+    # 3. Kodu veritabanına kaydet
+    # Mevcut verification_code sütununu bu iş için tekrar kullanabiliriz.
+    user.verification_code = reset_code
+    db.session.commit()
+
+    # 4. Mail Gönder
+    try:
+        msg = Message(
+            subject="Şifre Sıfırlama Kodu - Yemekhane App",
+            sender=email,  # Config'deki mail adresi
+            recipients=[email]
+        )
+        msg.body = f"Merhaba {user.ad},\n\nŞifreni sıfırlamak için gereken kod: {reset_code}\n\nEğer bu işlemi sen yapmadıysan bu maili görmezden gel."
+        mail.send(msg)
+
+        return jsonify({'message': 'Sıfırlama kodu mail adresinize gönderildi.'}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Mail gönderilirken bir hata oluştu.'}), 500
+
+
+# -------------------------------------------------------------------
+# 5. ŞİFRE SIFIRLAMA (YENİ ŞİFRE BELİRLEME)
+# -------------------------------------------------------------------
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """
+    Kullanıcı mailini, gelen kodu ve YENİ şifresini gönderir.
+    Kod doğruysa ve şifre eskisinden farklıysa güncellenir.
+    """
+    data = request.get_json()
+
+    email = data.get('email')
+    code = data.get('code')
+    new_password = data.get('new_password')
+
+    # 1. Eksik bilgi kontrolü
+    if not email or not code or not new_password:
+        return jsonify({'error': 'Email, kod ve yeni şifre gereklidir'}), 400
+
+    # 2. Şifre kurallarına uyuyor mu?
+    is_valid_pass, message_pass = validate_password(new_password)
+    if not is_valid_pass:
+        return jsonify({'error': message_pass}), 400
+
+    # 3. Kullanıcıyı bul
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({'error': 'Kullanıcı bulunamadı'}), 404
+
+    # --- YENİ EKLENEN KISIM: ESKİ ŞİFRE KONTROLÜ ---
+    # Kullanıcının girdiği 'new_password', mevcut şifresiyle aynı mı?
+    if user.check_password(new_password):
+        return jsonify({'error': 'Yeni şifreniz eski şifrenizle aynı olamaz. Lütfen farklı bir şifre belirleyin.'}), 400
+    # -----------------------------------------------
+
+    # 4. Kod Doğru mu?
+    if user.verification_code == code:
+
+        user.set_password(new_password)  # Yeni şifreyi kaydet
+        user.verification_code = None  # Kodu sil
+
+        db.session.commit()
+
+        return jsonify({'message': 'Şifreniz başarıyla değiştirildi! Yeni şifrenizle giriş yapabilirsiniz.'}), 200
+    else:
+        return jsonify({'error': 'Girdiğiniz kod hatalı veya süresi dolmuş.'}), 400
