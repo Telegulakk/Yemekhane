@@ -2,7 +2,7 @@ from email.header import Header
 from email.utils import make_msgid
 import os
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt_identity
 from flask_mail import Message
 import random
 
@@ -175,16 +175,8 @@ def profile():
     }), 200
 
 
-# -------------------------------------------------------------------
-# 4. ŞİFREMİ UNUTTUM (KOD GÖNDERME)
-# -------------------------------------------------------------------
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
-    """
-    Kullanıcı mail adresini girer.
-    Sistem kullanıcının varlığını kontrol eder.
-    Var ise veritabanına bir doğrulama kodu yazar ve mail atar.
-    """
     data = request.get_json()
     email = data.get('email')
 
@@ -195,34 +187,44 @@ def forgot_password():
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        # Güvenlik önlemi: Kullanıcı yoksa bile "Yok" demeyiz,
-        # kötü niyetli kişiler rastgele mail deneyip kimin üye olduğunu anlamasın diye
-        # sanki göndermiş gibi yaparız veya genel bir hata döneriz.
+        # Güvenlik: Kullanıcı yoksa bile renk vermiyoruz (User Enumeration saldırısını önlemek için)
         return jsonify({'error': 'Bu mail adresiyle kayıtlı kullanıcı bulunamadı'}), 404
 
-    # 2. Yeni bir kod oluştur (Örn: 381920)
+    # 2. Yeni kod oluştur
     reset_code = str(random.randint(100000, 999999))
 
     # 3. Kodu veritabanına kaydet
-    # Mevcut verification_code sütununu bu iş için tekrar kullanabiliriz.
     user.verification_code = reset_code
     db.session.commit()
 
-    # 4. Mail Gönder
+    # 4. Mail Gönder (DÜZELTİLMİŞ KISIM)
     try:
+        # A. Başlığı Türkçe karakterlere uygun hale getir
+        subject_header = Header("Sifre Sifirlama Kodu - Yemekhane App", 'utf-8').encode()
+
+        # B. Göndericiyi sabitle (Kullanıcının maili değil, senin app mailin olmalı)
+        safe_sender = ("Yemekhane App", os.environ.get('MAIL_USERNAME'))
+
         msg = Message(
-            subject="Şifre Sıfırlama Kodu - Yemekhane App",
-            sender=email,  # Config'deki mail adresi
-            recipients=[email]
+            subject=subject_header,
+            sender=safe_sender,  # <-- Düzeltildi
+            recipients=[email],
+            charset='utf-8'  # <-- Düzeltildi
         )
-        msg.body = f"Merhaba {user.ad},\n\nŞifreni sıfırlamak için gereken kod: {reset_code}\n\nEğer bu işlemi sen yapmadıysan bu maili görmezden gel."
+
+        # C. Bilgisayar ismindeki Türkçe karakter hatasını önle
+        msg.msgId = make_msgid(domain='yemekhane.local')
+
+        msg.body = f"Merhaba {user.ad},\n\nSifreni sifirlamak icin gereken kod: {reset_code}\n\nEger bu islemi sen yapmadiysan bu maili gormezden gel."
+
         mail.send(msg)
 
         return jsonify({'message': 'Sıfırlama kodu mail adresinize gönderildi.'}), 200
 
     except Exception as e:
-        return jsonify({'error': 'Mail gönderilirken bir hata oluştu.'}), 500
-
+        # Hata detayını konsola yazdır ki görelim (Client'a genel hata dönüyoruz)
+        print(f"Mail Hatası Detayı: {e}")
+        return jsonify({'error': f'Mail gönderilirken hata oluştu: {str(e)}'}), 500
 
 # -------------------------------------------------------------------
 # 5. ŞİFRE SIFIRLAMA (YENİ ŞİFRE BELİRLEME)

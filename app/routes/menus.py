@@ -5,13 +5,14 @@ from app.extensions import db
 from app.models.menu import Menu
 from app.models.rating import Rating
 from app.models.comment import Comment
-from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
+from app.middleware.auth_middleware import token_required, student_required
+from flask_jwt_extended import get_jwt_identity
 
 menus_bp = Blueprint('menus', __name__)
 
 
 @menus_bp.route('/today', methods=['GET'])
-# @token_required  # Şimdilik kapalı
+@token_required  # Şimdilik kapalı
 def get_today_menu():
     """O günün menüsünü getirir"""
     today = date.today()
@@ -24,7 +25,7 @@ def get_today_menu():
 
 
 @menus_bp.route('/stats', methods=['GET'])
-# @token_required  # Şimdilik kapalı
+@token_required  # Şimdilik kapalı
 def get_menu_stats():
     """ İstatistikleri getirir """
     sort_by = request.args.get('sortBy', 'newest')
@@ -74,7 +75,7 @@ def get_menu_stats():
 
 
 @menus_bp.route('/<menu_id>', methods=['GET'])
-# @token_required  # Şimdilik kapalı
+@token_required  # Şimdilik kapalı
 def get_menu_details(menu_id):
     """Belirli bir menünün detaylarını getirir"""
     menu = Menu.query.get(menu_id)
@@ -96,8 +97,8 @@ def get_menu_details(menu_id):
 
 
 @menus_bp.route('/<menu_id>/rate', methods=['POST'])
+@student_required
 def rate_menu(menu_id):
-    # @student_required
     """Bir menüye puan verir veya günceller"""
     data = request.get_json()
 
@@ -112,7 +113,7 @@ def rate_menu(menu_id):
     if not menu:
         return jsonify({'error': 'Menü bulunamadı'}), 404
 
-    current_user_id = current_user_or_test()
+    current_user_id = get_jwt_identity()
 
     existing_rating = Rating.query.filter_by(
         kullanici_id=current_user_id,

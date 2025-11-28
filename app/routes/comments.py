@@ -4,14 +4,15 @@ from app.extensions import db
 from app.models.menu import Menu
 from app.models.comment import Comment
 from app.models.comment_like import CommentLike
-from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
+from app.middleware.auth_middleware import token_required, student_required
+from flask_jwt_extended import get_jwt_identity
 
 comments_bp = Blueprint('comments', __name__)
 comment_actions_bp = Blueprint('comment_actions', __name__)
 
 
 @comments_bp.route('/<menu_id>/comments', methods=['GET'])
-# @token_required
+@token_required
 def get_menu_comments(menu_id):
     """Bir menünün yorumlarını listeler"""
     # Menü var mı?
@@ -57,10 +58,10 @@ def get_menu_comments(menu_id):
 
 
 @comments_bp.route('/<menu_id>/comment', methods=['POST'])
-# @student_required
+@student_required
 def create_comment(menu_id):
     """Bir menüye yorum yapar"""
-    current_user_id = current_user_or_test()
+    current_user_id = get_jwt_identity()
     data = request.get_json()
 
     if 'yorumMetni' not in data or not data['yorumMetni'].strip():
@@ -88,10 +89,10 @@ def create_comment(menu_id):
 
 
 @comment_actions_bp.route('/<comment_id>', methods=['PUT'])
-# @student_required
+@student_required
 def update_comment(comment_id):
     """Kendi yorumunu günceller"""
-    current_user = current_user_or_test()
+    current_user = get_jwt_identity()
     data = request.get_json()
 
     if 'yorumMetni' not in data or not data['yorumMetni'].strip():
@@ -117,10 +118,10 @@ def update_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>', methods=['DELETE'])
-# @student_required
+@student_required
 def delete_comment(comment_id):
     """Kendi yorumunu siler"""
-    current_user = current_user_or_test()
+    current_user = get_jwt_identity()
 
     # Yorum var mı?
     comment = Comment.query.get(comment_id)
@@ -139,10 +140,10 @@ def delete_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/like', methods=['POST'])
-# @student_required
+@student_required
 def like_comment(comment_id):
     """Yorumu beğenir"""
-    current_user = current_user_or_test()
+    current_user = get_jwt_identity()
 
     # Yorum var mı?
     comment = Comment.query.get(comment_id)
@@ -179,10 +180,10 @@ def like_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/like', methods=['DELETE'])
-# @student_required
+@student_required
 def unlike_comment(comment_id):
     """Beğeniyi geri çeker"""
-    current_user = current_user_or_test()
+    current_user = get_jwt_identity()
 
     like = CommentLike.query.filter_by(
         kullanici_id=current_user,
@@ -200,10 +201,10 @@ def unlike_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/dislike', methods=['POST'])
-# @student_required
+@student_required
 def dislike_comment(comment_id):
     """Yorumu beğenmez"""
-    current_user = current_user_or_test()
+    current_user = get_jwt_identity()
 
     # Yorum var mı?
     comment = Comment.query.get(comment_id)
@@ -240,10 +241,10 @@ def dislike_comment(comment_id):
 
 
 @comment_actions_bp.route('/<comment_id>/dislike', methods=['DELETE'])
-# @student_required
+@student_required
 def remove_dislike(comment_id):
     """Beğenmeme tepkisini geri çeker"""
-    current_user = current_user_or_test()
+    current_user = get_jwt_identity()
 
     dislike = CommentLike.query.filter_by(
         kullanici_id=current_user,

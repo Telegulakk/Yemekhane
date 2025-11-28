@@ -3,7 +3,8 @@ from app.extensions import db
 from app.models.density import DensityVote
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
-from app.middleware.auth_middleware import token_required, student_required, current_user_or_test
+from app.middleware.auth_middleware import token_required, student_required
+from flask_jwt_extended import get_jwt_identity
 
 density_bp = Blueprint('density', __name__, url_prefix='/density')
 
@@ -29,9 +30,9 @@ def get_current_density():
 
 # Kullanıcıdan yoğunluk puanı alır
 @density_bp.route('/rate', methods=['POST'])
-# @token_required
+@token_required
 def rate_density():
-    current_user_id = current_user_or_test()
+    current_user_id = get_jwt_identity()
     data = request.get_json()
 
     # Puan 1-5 arasında mı ?
