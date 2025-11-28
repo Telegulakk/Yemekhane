@@ -1,3 +1,6 @@
+from email.header import Header
+from email.utils import make_msgid
+import os
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from flask_mail import Message
@@ -33,7 +36,6 @@ def register():
     if not is_valid_pass:
         return jsonify({'error': message_pass}), 400
 
-    # Email zaten var mı?
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Bu email adresi zaten kayıtlı'}), 409
 
@@ -41,27 +43,44 @@ def register():
     generated_code = str(random.randint(100000, 999999))
 
     try:
-        # DİKKAT: Şifreyi hashlemeden (ham haliyle) veriyoruz, modelin içinde o hashleniyor.
         new_user = User(
             ad=data['ad'],
             soyad=data['soyad'],
             email=data['email'],
-            sifre=data['sifre'],  # Model bunu alıp set_password ile hashleyecek
+            sifre=data['sifre'],
             is_verified=False,
             verification_code=generated_code
         )
 
         db.session.add(new_user)
-        db.session.commit()
+        db.session.flush()
 
-        # Mail Gönderme
+        # --- MAIL AYARLARI ---
+
+        # 1. Konu Başlığı (Türkçe karakterleri 'Header' ile sarıyoruz)
+        subject_header = Header("Yemekhane Uygulaması Doğrulama Kodu", 'utf-8').encode()
+
+        # 2. Gönderici İsmi (Temiz isim kullanıyoruz)
+        safe_sender = ("Yemekhane App", os.environ.get('MAIL_USERNAME'))
+
         msg = Message(
-            subject="Yemekhane Uygulaması Doğrulama Kodu",
-            sender=data['email'],
-            recipients=[data['email']]
+            subject=subject_header,
+            sender=safe_sender,
+            recipients=[data['email']],
+            charset='utf-8'
         )
+
+        # --- KRİTİK DÜZELTME BURADA ---
+        # Bilgisayar isminde 'ü' varsa (örn: Hüseyin-PC) hata vermemesi için
+        # domain kısmını elle 'gmail.com' veya 'localhost' yapıyoruz.
+        msg.msgId = make_msgid(domain='yemekhane.local')
+
+        # İçerik
         msg.body = f"Merhaba {data['ad']}, Doğrulama Kodun: {generated_code}"
+
         mail.send(msg)
+
+        db.session.commit()
 
         return jsonify({
             'message': 'Kayıt başarılı! Lütfen mailinize gelen kodu giriniz.',
@@ -70,10 +89,11 @@ def register():
 
     except Exception as e:
         db.session.rollback()
-        # Hatanın ne olduğunu görmek için print ekledik
+        # Hatayı konsola tam yazdıralım ki görelim
+        import traceback
+        traceback.print_exc()
         print(f"Kayıt Hatası: {e}")
-        return jsonify({'error': 'Sunucu hatası oluştu.'}), 500
-
+        return jsonify({'error': f'Sunucu hatası: {str(e)}'}), 500
 
 # -------------------------------------------------------------------
 # 2. DOĞRULAMA (VERIFY)

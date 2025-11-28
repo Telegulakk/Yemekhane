@@ -26,9 +26,30 @@ def seed_database():
 
         # Test kullanıcıları
         users = [
-            User(ad="Ahmet", soyad="Yılmaz", email="ahmet.yilmaz@ogrenci.edu.tr", sifre="Sifre123"),
-            User(ad="Ayşe", soyad="Demir", email="ayse.demir@ogrenci.edu.tr", sifre="Sifre123"),
-            User(ad="Mehmet", soyad="Kaya", email="mehmet.kaya@ogrenci.edu.tr", sifre="Sifre123"),
+            User(
+                ad="Ahmet",
+                soyad="Yılmaz",
+                email="ahmet.yilmaz@ogrenci.edu.tr",
+                sifre="Sifre123",
+                is_verified=True,
+                verification_code=None
+            ),
+            User(
+                ad="Ayşe",
+                soyad="Demir",
+                email="ayse.demir@ogrenci.edu.tr",
+                sifre="Sifre123",
+                is_verified=True,
+                verification_code=None
+            ),
+            User(
+                ad="Mehmet",
+                soyad="Kaya",
+                email="mehmet.kaya@ogrenci.edu.tr",
+                sifre="Sifre123",
+                is_verified=True,
+                verification_code=None
+            ),
         ]
 
         for user in users:
