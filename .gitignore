@@ -33,7 +33,7 @@ instance/
 Thumbs.db
 
 # Migrations
-migrations/versions/*.pyc
+migrations/
 
 # Logs
 *.log
