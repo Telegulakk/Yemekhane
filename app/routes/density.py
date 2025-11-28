@@ -11,6 +11,7 @@ density_bp = Blueprint('density', __name__, url_prefix='/density')
 
 # Son 30 dakikanın ortalamasını getirir
 @density_bp.route('/', methods=['GET'])
+@token_required
 def get_current_density():
     # Son 30 dknın verileri
     thirty_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=30)
