@@ -6,13 +6,8 @@ from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app.models.user import User
 
-
 TEST_USER_ID = os.getenv("TEST_USER_ID", None)
 
-def current_user_or_test():
-    if TEST_USER_ID:  #loginsiz test girişi (.env ye databaseden seçtğimiz bir user idsini koyarız)
-        return TEST_USER_ID # böylece istediğimiz user idsi döner
-    return current_user.id #aksi halde login ile giriş yapmış user arayacak ve onun idsini bulucak (normalde olması gereken)
 
 def token_required(fn):
     """
