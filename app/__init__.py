@@ -2,6 +2,7 @@ from flask import Flask
 from app.config import config
 from app.extensions import db, migrate, jwt, cors
 from app.extensions import db, mail
+from app.routes.admin import admin_bp
 
 
 def create_app(config_name='default'):
@@ -26,5 +27,6 @@ def create_app(config_name='default'):
     app.register_blueprint(comments_bp, url_prefix='/menus')
     app.register_blueprint(comment_actions_bp, url_prefix='/comments')
     app.register_blueprint(density_bp, url_prefix='/density')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
     return app

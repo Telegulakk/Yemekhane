@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity
 from flask_mail import Message
 import random
+from app.config import Config
 
 # Proje dosyaları
 from app.extensions import db, mail
@@ -273,3 +274,35 @@ def reset_password():
         return jsonify({'message': 'Şifreniz başarıyla değiştirildi! Yeni şifrenizle giriş yapabilirsiniz.'}), 200
     else:
         return jsonify({'error': 'Girdiğiniz kod hatalı veya süresi dolmuş.'}), 400
+
+
+@auth_bp.route('/admin-login', methods=['POST'])
+def admin_login():
+    """
+    Sadece .env dosyasındaki bilgilerle giriş yapan Süper Admin girişi.
+    """
+    data = request.get_json()
+
+    email = data.get('email')
+    password = data.get('sifre')
+
+    # 1. Bilgiler .env ile eşleşiyor mu?
+    if email == Config.ADMIN_EMAIL and password == Config.ADMIN_PASSWORD:
+
+        # 2. Özel bir token oluşturuyoruz.
+        # 'is_super_admin': True etiketi yapıştırıyoruz ki middleware onu tanısın.
+        access_token = create_access_token(
+            identity="super_admin",
+            additional_claims={"is_super_admin": True, "rol": "admin"}
+        )
+
+        return jsonify({
+            'message': 'Yönetici girişi başarılı',
+            'token': access_token,
+            'user': {
+                'ad': 'Yönetici',
+                'rol': 'admin'
+            }
+        }), 200
+    else:
+        return jsonify({'error': 'Hatalı yönetici bilgileri'}), 401

@@ -10,16 +10,17 @@ class Menu(db.Model):
     tarih = db.Column(db.Date, unique=True, nullable=False)  # Her gün bir menü
     yemekler = db.Column(ARRAY(db.String), nullable=False)  # PostgreSQL array tipi
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    resim_yolu = db.Column(db.String(255), nullable=True) #Fotoğraf yükleme
     # İlişkiler
     ratings = db.relationship('Rating', back_populates='menu', cascade='all, delete-orphan')
     comments = db.relationship('Comment', back_populates='menu', cascade='all, delete-orphan')
 
-    def __init__(self, tarih, yemekler):
+    def __init__(self, tarih, yemekler,resim_yolu=None):
         import uuid
         self.id = str(uuid.uuid4())
         self.tarih = tarih
         self.yemekler = yemekler
+        self.resim_yolu = resim_yolu
 
     @property
     def ortalama_puan(self):
@@ -45,5 +46,6 @@ class Menu(db.Model):
             'yemekler': self.yemekler,
             'ortalamaPuan': self.ortalama_puan,
             'puanlayanKisiSayisi': self.puanlayan_kisi_sayisi,
-            'yorumSayisi': self.yorum_sayisi
+            'yorumSayisi': self.yorum_sayisi,
+            'resimYolu': self.resim_yolu
         }

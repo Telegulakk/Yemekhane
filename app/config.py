@@ -24,6 +24,15 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
 
+    #Admin Ayarları
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+
+    # Resim Yükleme Yolu
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    UPLOAD_FOLDER = os.path.join(base_dir, 'static', 'uploads')
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
 
 class DevelopmentConfig(Config): # Test ortamı
     DEBUG = True

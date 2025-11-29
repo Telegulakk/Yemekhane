@@ -5,6 +5,7 @@ from functools import wraps
 from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app.models.user import User
+from flask_jwt_extended import get_jwt
 
 TEST_USER_ID = os.getenv("TEST_USER_ID", None)
 
@@ -63,12 +64,22 @@ def student_required(fn):
 def admin_required(fn):
     """
     Sadece 'admin' rolüne sahip kullanıcılar girebilir.
+    Hem veritabanındaki adminleri hem de .env Süper Admini kabul eder.
     """
 
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             verify_jwt_in_request()
+
+            # Token'ın içindeki gizli bilgilere (claims) bak
+            claims = get_jwt()
+
+            # DURUM 1: Eğer bu .env'den giren SÜPER ADMIN ise direkt izin ver
+            if claims.get("is_super_admin") == True:
+                return fn(*args, **kwargs)
+
+            # DURUM 2: Normal veritabanı kullanıcısı ise kontrol et
             user_id = get_jwt_identity()
             user = User.query.get(user_id)
 
@@ -76,7 +87,7 @@ def admin_required(fn):
                 return jsonify({'error': 'Bu alana sadece yöneticiler girebilir!'}), 403
 
         except Exception as e:
-            return jsonify({'error': 'Yetkilendirme hatası'}), 401
+            return jsonify({'error': 'Yetkilendirme hatası: ' + str(e)}), 401
 
         return fn(*args, **kwargs)
 

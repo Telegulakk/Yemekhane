@@ -1,18 +1,20 @@
-from flask import Blueprint, request, jsonify
-from datetime import date
+import os
+from flask import Blueprint, request, jsonify, current_app
+from datetime import date, datetime
 from sqlalchemy import desc, func
 from app.extensions import db
 from app.models.menu import Menu
 from app.models.rating import Rating
 from app.models.comment import Comment
-from app.middleware.auth_middleware import token_required, student_required
+from app.middleware.auth_middleware import token_required, student_required, admin_required
 from flask_jwt_extended import get_jwt_identity
+
 
 menus_bp = Blueprint('menus', __name__)
 
 
 @menus_bp.route('/today', methods=['GET'])
-@token_required  # Şimdilik kapalı
+@token_required
 def get_today_menu():
     """O günün menüsünü getirir"""
     today = date.today()
@@ -25,7 +27,7 @@ def get_today_menu():
 
 
 @menus_bp.route('/stats', methods=['GET'])
-@token_required  # Şimdilik kapalı
+@token_required
 def get_menu_stats():
     """ İstatistikleri getirir """
     sort_by = request.args.get('sortBy', 'newest')
@@ -75,7 +77,7 @@ def get_menu_stats():
 
 
 @menus_bp.route('/<menu_id>', methods=['GET'])
-@token_required  # Şimdilik kapalı
+@token_required
 def get_menu_details(menu_id):
     """Belirli bir menünün detaylarını getirir"""
     menu = Menu.query.get(menu_id)
@@ -138,3 +140,58 @@ def rate_menu(menu_id):
         'message': message_text,
         'menu': menu.to_dict()
     }), 200
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+
+@menus_bp.route('/upload-photo', methods=['POST'])
+@admin_required
+def upload_menu_photo():
+    """
+    Admin, botun çektiği menüye fotoğraf ekler.
+    Modeldeki 'tarih' alanına göre menüyü bulur ve 'resim_yolu'nu günceller.
+    """
+    # 1. Resim ve Tarih kontrolü
+    if 'resim' not in request.files:
+        return jsonify({'error': 'Resim dosyası yüklenmedi'}), 400
+
+    file = request.files['resim']
+    tarih_str = request.form.get('tarih')  # YYYY-MM-DD
+
+    if not file or file.filename == '':
+        return jsonify({'error': 'Dosya seçilmedi'}), 400
+    if not tarih_str:
+        return jsonify({'error': 'Tarih belirtilmeli'}), 400
+
+    try:
+        date_obj = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+    except:
+        return jsonify({'error': 'Tarih formatı hatalı (YYYY-MM-DD olmalı)'}), 400
+
+    # 2. Menüyü bul
+    menu = Menu.query.filter_by(tarih=date_obj).first()
+
+    if not menu:
+        return jsonify({'error': 'Bu tarih için menü bulunamadı. Önce yemeklerin eklenmesi lazım.'}), 404
+
+    # 3. Resmi Kaydet
+    if allowed_file(file.filename):
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"menu_{tarih_str}.{ext}"
+
+        # app/static/uploads klasörüne kaydet
+        save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(save_path)
+
+        # 4. Veritabanını güncelle
+        menu.resim_yolu = filename
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Fotoğraf başarıyla eklendi.',
+            'menu': menu.to_dict()
+        }), 200
+    else:
+        return jsonify({'error': 'Geçersiz dosya türü'}), 400
