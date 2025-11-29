@@ -6,6 +6,7 @@ from flask_jwt_extended import create_access_token, get_jwt_identity
 from flask_mail import Message
 import random
 from app.config import Config
+from app.models.banned_user import BannedUser
 
 # Proje dosyaları
 from app.extensions import db, mail
@@ -39,6 +40,11 @@ def register():
 
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Bu email adresi zaten kayıtlı'}), 409
+
+    if BannedUser.query.filter_by(email=data['email']).first():
+        return jsonify({
+            'error': 'Bu mail banlandı.'
+        }), 403
 
     # --- KULLANICI OLUŞTURMA ---
     generated_code = str(random.randint(100000, 999999))

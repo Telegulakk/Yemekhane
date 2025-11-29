@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.menu import Menu
 from app.models.comment import Comment
 from app.models.rating import Rating
+from app.models.banned_user import BannedUser
 
 from app.middleware.auth_middleware import admin_required
 
@@ -207,18 +208,29 @@ def list_users():
 @admin_bp.route('/users/<user_id>', methods=['DELETE'])
 @admin_required
 def delete_user(user_id):
-    """Kullanıcıyı ve ona ait her şeyi (yorum, puan vb.) siler"""
+    """Kullanıcıyı siler ve mailini kara listeye ekler"""
     user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'Kullanıcı bulunamadı'}), 404
 
-    # Admin kendini silemesin :)
     if user.rol == 'admin':
         return jsonify({'error': 'Yöneticiler silinemez'}), 403
 
+    # 1. Kullanıcının mailini al
+    email_to_ban = user.email
+
+    # 2. Maili Kara Listeye Ekle (Eğer zaten yoksa)
+    if not BannedUser.query.filter_by(email=email_to_ban).first():
+        banned_user = BannedUser(email=email_to_ban)
+        db.session.add(banned_user)
+
+    # 3. Kullanıcıyı ve verilerini sil
     db.session.delete(user)
+
+    # Hepsini tek seferde kaydet
     db.session.commit()
-    return jsonify({'message': 'Kullanıcı silindi'}), 200
+
+    return jsonify({'message': f'Kullanıcı silindi ve {email_to_ban} adresi engellendi.'}), 200
 
 
 # ==============================================================================
@@ -234,4 +246,52 @@ def admin_profile():
         'message': 'Admin oturumu aktif',
         'rol': 'admin',
         'server_time': datetime.now().isoformat()
+    }), 200
+
+
+# ==============================================================================
+# YASAKLI KULLANICI YÖNETİMİ (BAN SİSTEMİ)
+# ==============================================================================
+
+@admin_bp.route('/banned-users', methods=['GET'])
+@admin_required
+def list_banned_users():
+    """Yasaklanmış mail adreslerini listeler"""
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
+
+    # En son yasaklanan en üstte görünsün
+    query = BannedUser.query.order_by(desc(BannedUser.ban_date))
+    pagination = query.paginate(page=page, per_page=limit, error_out=False)
+
+    return jsonify({
+        'banned_users': [{
+            'id': b.id,  # Yasağı kaldırmak için bu ID lazım olacak
+            'email': b.email,
+            'ban_date': b.ban_date.isoformat()
+        } for b in pagination.items],
+        'total': pagination.total,
+        'pages': pagination.pages
+    }), 200
+
+
+@admin_bp.route('/banned-users/<int:ban_id>', methods=['DELETE'])
+@admin_required
+def unban_user(ban_id):
+    """
+    ID'si verilen yasağı kaldırır.
+    Böylece o mail adresi tekrar kayıt olabilir.
+    """
+    banned_record = BannedUser.query.get(ban_id)
+
+    if not banned_record:
+        return jsonify({'error': 'Yasaklı kaydı bulunamadı'}), 404
+
+    email = banned_record.email  # Bilgi mesajı için saklayalım
+
+    db.session.delete(banned_record)
+    db.session.commit()
+
+    return jsonify({
+        'message': f'{email} adresinin yasağı kaldırıldı. Artık tekrar kayıt olabilir.'
     }), 200
