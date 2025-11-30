@@ -118,18 +118,40 @@ def list_all_menus():
 @admin_required
 def list_comments():
     """Son yorumları listeler (Moderasyon için)"""
+    sort_by = request.args.get('sortBy', 'all')
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 20, type=int)
 
-    # En yeniden eskiye
-    comments_query = Comment.query.order_by(desc(Comment.created_at))
-    pagination = comments_query.paginate(page=page, per_page=limit, error_out=False)
+    query = Comment.query
 
+    if sort_by == 'reported_comments':
+        query = query.filter(Comment.is_report == True).order_by(desc(Comment.created_at))
+    else:
+        query = query.order_by(desc(Comment.created_at))
+
+    pagination = query.paginate(page=page, per_page=limit, error_out=False)
     return jsonify({
         'comments': [c.to_dict() for c in pagination.items],
         'total': pagination.total,
         'pages': pagination.pages
     }), 200
+
+@admin_bp.route('/comments/<comment_id>/false_report', methods=['POST'])
+@admin_required
+def false_report(comment_id):
+    """Yorum şikayetini reddetmek"""
+
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        return jsonify({'error': 'Yorum bulunamadı'}), 404
+
+    if comment.is_report:
+        comment.is_report = False
+    else:
+        return jsonify({'message': 'Bu yorum zaten şikayet edilmemiş'}), 400
+
+    db.session.commit()
+    return jsonify({'message': 'Şikayet reddedildi'}), 200
 
 
 @admin_bp.route('/comments/<comment_id>', methods=['DELETE'])
