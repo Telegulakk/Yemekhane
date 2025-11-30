@@ -259,3 +259,23 @@ def remove_dislike(comment_id):
     db.session.commit()
 
     return jsonify({'message': 'Beğenmeme tepkisi geri çekildi'}), 200
+
+@comment_actions_bp.route('/<comment_id>/report', methods=['POST'])
+@student_required
+def report_comment(comment_id):
+    """yorumu şikayet eder"""
+
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        return jsonify({'error': 'Yorum bulunamadı'}), 404
+
+    if comment.is_report:
+        return jsonify({'error': 'Bu yorum zaten raporlanmış'}), 400
+
+    comment.is_report = True
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Yorum şikayet edildi',
+    }), 201
