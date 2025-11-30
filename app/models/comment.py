@@ -10,6 +10,7 @@ class Comment(db.Model):
     kullanici_id = db.Column(db.String(50), db.ForeignKey('users.id'), nullable=False)
     yorum_metni = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_report = db.Column(db.Boolean, nullable=False, default=False)
 
     # İlişkiler
     user = db.relationship('User', back_populates='comments')
@@ -22,6 +23,7 @@ class Comment(db.Model):
         self.menu_id = menu_id
         self.kullanici_id = kullanici_id
         self.yorum_metni = yorum_metni
+        self.is_report = False
 
     @property
     def begeni_sayisi(self):
@@ -42,6 +44,7 @@ class Comment(db.Model):
             'tarih': self.created_at.isoformat(),
             'begeniSayisi': self.begeni_sayisi,
             'begenmemeSayisi': self.begenmeme_sayisi,
+            'isReport': self.is_report,
             'kullanici': {
                 'ad': self.user.ad,
                 'soyad': self.user.soyad
